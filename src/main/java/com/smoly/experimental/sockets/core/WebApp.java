@@ -25,6 +25,7 @@ public class WebApp {
 
     protected final Provider<Dispatcher> dispatcherProvider;
     final Set<Controller> registeredControllers;
+    final Executor executor;
     AtomicInteger createdDispatchersCount;
     BlockingQueue<Dispatcher> dispatchersPool;
     protected final RouterMap routerMap;
@@ -33,11 +34,12 @@ public class WebApp {
 
     @Inject
     public WebApp(Config config, RouterMap routerMap, Set<Controller> registeredControllers,
-                  Provider<Dispatcher> dispatcherProvider) {
+                  Provider<Dispatcher> dispatcherProvider, Executor executor) {
         this.dispatcherProvider = dispatcherProvider;
         this.routerMap = routerMap;
         this.registeredControllers = registeredControllers;
         this.config = config;
+        this.executor = executor;
         createdDispatchersCount = new AtomicInteger();
         dispatchersPool = new ArrayBlockingQueue<>(config.getMaxThreads());
     }
@@ -45,7 +47,6 @@ public class WebApp {
     public void boot(String[] args, Injector mainInjector) {
         this.mainInjector = mainInjector;
     }
-
 
     public void registerControllerRoutes(Class controllerClass) {
         Arrays.stream(controllerClass
@@ -67,12 +68,10 @@ public class WebApp {
     public void start() throws IOException {
         System.out.println("Listening for connection on port " + config.getPort());
         ServerSocket server = new ServerSocket(config.getPort());
-        Executor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(config.getMaxThreads());
         while (true) {
             Socket clientSocket = server.accept();
             HttpRequest request = new HttpRequest(clientSocket);
             Context ctx = new Context(clientSocket, request);
-
             executor.execute(
                     getRequestHandlerTask(ctx)
             );
