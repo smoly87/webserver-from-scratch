@@ -13,14 +13,15 @@ public class HttpRequest {
     }
 
     public HttpRequest(Socket clientSocket) throws IOException {
-        InputStreamReader isr =  new InputStreamReader(clientSocket.getInputStream());
-        BufferedReader reader = new BufferedReader(isr);
-        String line = reader.readLine();
-        while (!line.isEmpty()) {
-            if(line.startsWith("GET")) {
-                this.path = line.split(" ")[1];
+        try(InputStreamReader clientSocketInputStream =  new InputStreamReader(clientSocket.getInputStream())) {
+            BufferedReader reader = new BufferedReader(clientSocketInputStream);
+            String line = reader.readLine();
+            while (!line.isEmpty()) {
+                if(line.startsWith("GET")) {
+                    this.path = line.split(" ")[1];
+                }
+                line = reader.readLine();
             }
-            line = reader.readLine();
         }
     }
 }
