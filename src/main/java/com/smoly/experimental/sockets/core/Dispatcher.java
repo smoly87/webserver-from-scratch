@@ -3,8 +3,10 @@ package com.smoly.experimental.sockets.core;
 import com.google.inject.Inject;
 import com.smoly.experimental.sockets.core.http.Context;
 
+import javax.inject.Singleton;
 import java.io.IOException;
 
+@Singleton
 public class Dispatcher {
     protected final RouterMap routerMap;
     @Inject

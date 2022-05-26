@@ -1,7 +1,6 @@
 package com.smoly.experimental.sockets.core;
 
 import com.google.inject.Injector;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.smoly.experimental.sockets.core.app.Config;
 import com.smoly.experimental.sockets.core.common.Controller;
@@ -18,30 +17,25 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
 public class WebApp {
 
-    protected final Provider<Dispatcher> dispatcherProvider;
     final Set<Controller> registeredControllers;
     final Executor executor;
-    AtomicInteger createdDispatchersCount;
-    BlockingQueue<Dispatcher> dispatchersPool;
+    protected final Dispatcher requestDispatcher;
     protected final RouterMap routerMap;
     protected Config config;
     protected Injector mainInjector;
 
     @Inject
     public WebApp(Config config, RouterMap routerMap, Set<Controller> registeredControllers,
-                  Provider<Dispatcher> dispatcherProvider, Executor executor) {
-        this.dispatcherProvider = dispatcherProvider;
+                  Dispatcher requestDispatcher, Executor executor) {
+        this.requestDispatcher = requestDispatcher;
         this.routerMap = routerMap;
         this.registeredControllers = registeredControllers;
         this.config = config;
         this.executor = executor;
-        createdDispatchersCount = new AtomicInteger();
-        dispatchersPool = new ArrayBlockingQueue<>(config.getMaxThreads());
     }
 
     public void boot(String[] args, Injector mainInjector) {
@@ -72,9 +66,7 @@ public class WebApp {
             Socket clientSocket = server.accept();
             HttpRequest request = new HttpRequest(clientSocket);
             Context ctx = new Context(clientSocket, request);
-            executor.execute(
-                    getRequestHandlerTask(ctx)
-            );
+            executor.execute(getRequestHandlerTask(ctx));
         }
     }
 
@@ -83,19 +75,10 @@ public class WebApp {
             @Override
             public void run() {
                 System.out.println("Start handing request");
-                Dispatcher requestDispatcher = null;
                 try {
-                    if (dispatchersPool.size() == 0 && createdDispatchersCount.get() < config.getMaxThreads()) {
-                        requestDispatcher = dispatcherProvider.get();
-                        createdDispatchersCount.getAndIncrement();
-                    } else {
-                        requestDispatcher = dispatchersPool.take();
-                    }
                     requestDispatcher.processRequest(ctx);
                 } catch (Exception e) {
                     System.out.println("Error in request processing");
-                } finally {
-                    dispatchersPool.add(requestDispatcher);
                 }
             }
         };

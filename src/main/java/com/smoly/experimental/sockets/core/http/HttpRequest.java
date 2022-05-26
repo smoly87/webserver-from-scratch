@@ -13,7 +13,7 @@ public class HttpRequest {
     }
 
     public HttpRequest(Socket clientSocket) throws IOException {
-        try(InputStreamReader clientSocketInputStream =  new InputStreamReader(clientSocket.getInputStream())) {
+            InputStreamReader clientSocketInputStream = new InputStreamReader(clientSocket.getInputStream());
             BufferedReader reader = new BufferedReader(clientSocketInputStream);
             String line = reader.readLine();
             while (!line.isEmpty()) {
@@ -22,6 +22,5 @@ public class HttpRequest {
                 }
                 line = reader.readLine();
             }
-        }
     }
 }
