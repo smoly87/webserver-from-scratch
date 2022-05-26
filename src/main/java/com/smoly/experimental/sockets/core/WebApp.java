@@ -20,13 +20,14 @@ import java.util.concurrent.*;
 
 @Singleton
 public class WebApp {
+    private final Set<Controller> registeredControllers;
+    private final Executor executor;
+    private final Dispatcher requestDispatcher;
+    private final RouterMap routerMap;
+    private final Config config;
+    private Injector mainInjector;
 
-    final Set<Controller> registeredControllers;
-    final Executor executor;
-    protected final Dispatcher requestDispatcher;
-    protected final RouterMap routerMap;
-    protected Config config;
-    protected Injector mainInjector;
+    private BlockingQueue<Socket> clientRequestsQueue = new LinkedBlockingDeque<>(200);
 
     @Inject
     public WebApp(Config config, RouterMap routerMap, Set<Controller> registeredControllers,
@@ -60,17 +61,20 @@ public class WebApp {
     }
 
     public void start() throws IOException {
+        Thread daemonThread = new Thread(getClientRequestHandlerTask());
+        daemonThread.setDaemon(true);
+        daemonThread.start();
+
         System.out.println("Listening for connection on port " + config.getPort());
         ServerSocket server = new ServerSocket(config.getPort());
         while (true) {
             Socket clientSocket = server.accept();
-            HttpRequest request = new HttpRequest(clientSocket);
-            Context ctx = new Context(clientSocket, request);
-            executor.execute(getRequestHandlerTask(ctx));
+            clientRequestsQueue.offer(clientSocket);
         }
     }
 
-    Runnable getRequestHandlerTask (Context ctx) {
+
+    private Runnable getRequestHandlerTask (Context ctx) {
         return new Runnable() {
             @Override
             public void run() {
@@ -79,6 +83,26 @@ public class WebApp {
                     requestDispatcher.processRequest(ctx);
                 } catch (Exception e) {
                     System.out.println("Error in request processing");
+                }
+            }
+        };
+    }
+
+    private Runnable getClientRequestHandlerTask() {
+        return new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (true) {
+                        Socket clientSocket = clientRequestsQueue.take();
+                        HttpRequest request = new HttpRequest(clientSocket);
+                        Context ctx = new Context(clientSocket, request);
+                        executor.execute(getRequestHandlerTask(ctx));
+                    }
+                } catch (InterruptedException e) {
+                    throw new RuntimeException("Request processing fail due to interrupting exception");
+                } catch (IOException e) {
+                    throw new RuntimeException("Request processing fail");
                 }
             }
         };
