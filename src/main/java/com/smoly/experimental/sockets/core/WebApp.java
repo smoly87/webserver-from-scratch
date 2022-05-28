@@ -10,14 +10,15 @@ import com.smoly.experimental.sockets.core.http.HandlerType;
 import com.smoly.experimental.sockets.core.http.HttpRequest;
 
 import javax.inject.Inject;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingDeque;
 
 @Singleton
 public class WebApp {
@@ -80,12 +81,12 @@ public class WebApp {
         return new Runnable() {
             @Override
             public void run() {
-                System.out.println("Start handing request");
+                System.out.println("Start handling request");
                 try {
                     requestDispatcher.processRequest(ctx);
-                }catch (FileNotFoundException e) {
+                }catch (PageNotFoundException e) {
                     try {
-                        ctx.respond("", 404, "Not Found");
+                        ctx.respond("Error Page not found", 404, "Not Found");
                     } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }
