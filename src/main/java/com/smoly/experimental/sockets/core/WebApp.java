@@ -80,12 +80,12 @@ public class WebApp {
         return new Runnable() {
             @Override
             public void run() {
-                System.out.println("Start handing request");
+                System.out.println("Start handling request");
                 try {
                     requestDispatcher.processRequest(ctx);
-                }catch (FileNotFoundException e) {
+                }catch (PageNotFoundException e) {
                     try {
-                        ctx.respond("", 404, "Not Found");
+                        ctx.respond("Error Page not found", 404, "Not Found");
                     } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }

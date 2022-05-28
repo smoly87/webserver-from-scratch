@@ -21,7 +21,7 @@ public class Dispatcher {
             System.out.println("Router found: " + ctx.getRequest().getPath() );
             routerMap.getHandlerForPath(ctx.getRequest().getPath()).accept(ctx);
         } else {
-           throw new FileNotFoundException("Unknown route!" + ctx.getRequest().getPath());
+           throw new PageNotFoundException("Unknown route: " + ctx.getRequest().getPath());
         }
     }
 }
