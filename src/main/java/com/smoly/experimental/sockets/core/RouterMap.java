@@ -17,6 +17,13 @@ public class RouterMap {
         routersMap = new HashMap<>();
     }
 
+    /**
+     * This method registers association between path and method invoke.
+     *
+     * @param requestType Type of parameter - GET, POST
+     * @param path
+     * @param action
+     */
     public void addHandler(HandlerType requestType, String path, Consumer<Context> action) {
         routersMap.put(path, action);
     }

@@ -10,6 +10,7 @@ import com.smoly.experimental.sockets.core.http.HandlerType;
 import com.smoly.experimental.sockets.core.http.HttpRequest;
 
 import javax.inject.Inject;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
@@ -46,15 +47,16 @@ public class WebApp {
     public void registerControllerRoutes(Class controllerClass) {
         Arrays.stream(controllerClass
                 .getMethods())
-                .filter(method -> method.isAnnotationPresent(RouterAction.class)).forEach(method -> {
-            RouterAction routerAnnotation = method.getAnnotation(RouterAction.class);
-            routerMap.addHandler(HandlerType.GET, routerAnnotation.path(), (Context ctx) -> {
-                try {
-                    method.invoke(mainInjector.getInstance(controllerClass), ctx);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
+                .filter(method -> method.isAnnotationPresent(RouterAction.class))
+                .forEach(method -> {
+                    RouterAction routerAnnotation = method.getAnnotation(RouterAction.class);
+                    routerMap.addHandler(HandlerType.GET, routerAnnotation.path(), (Context ctx) -> {
+                       try {
+                          method.invoke(mainInjector.getInstance(controllerClass), ctx);
+                       } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                       } catch (InvocationTargetException e) {
+                          e.printStackTrace();
                 }
             });
         });
@@ -81,8 +83,14 @@ public class WebApp {
                 System.out.println("Start handing request");
                 try {
                     requestDispatcher.processRequest(ctx);
+                }catch (FileNotFoundException e) {
+                    try {
+                        ctx.respond("", 404, "Not Found");
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 } catch (Exception e) {
-                    System.out.println("Error in request processing");
+                    System.out.println("Error in request processing: " + e.getMessage());
                 }
             }
         };

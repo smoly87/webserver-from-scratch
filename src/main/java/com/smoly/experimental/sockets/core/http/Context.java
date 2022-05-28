@@ -17,7 +17,10 @@ public class Context {
     }
 
     public void respond(String response) throws IOException {
-        String httpResponse = "HTTP/1.1 200 OK\r\n\r\n " + response  ;
+        respond(response, 200, "OK");
+    }
+    public void respond(String response, int code, String codeMessage) throws IOException {
+        String httpResponse = String.format("HTTP/1.1 %d %s\r\n\r\n ",code, codeMessage ) + response  ;
         clientSocket.getOutputStream().write(httpResponse.getBytes("UTF-8"));
         clientSocket.getOutputStream().flush();
         clientSocket.close();

@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.smoly.experimental.sockets.core.http.Context;
 
 import javax.inject.Singleton;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 @Singleton
@@ -18,9 +19,9 @@ public class Dispatcher {
         System.out.println("Request was processed");
         if (routerMap.isHandlerForPathExists(ctx.getRequest().getPath())) {
             System.out.println("Router found: " + ctx.getRequest().getPath() );
-            routerMap.routersMap.get(ctx.getRequest().getPath()).accept(ctx);
+            routerMap.getHandlerForPath(ctx.getRequest().getPath()).accept(ctx);
         } else {
-           throw new IllegalArgumentException("Unknown route!" + ctx.getRequest().getPath());
+           throw new FileNotFoundException("Unknown route!" + ctx.getRequest().getPath());
         }
     }
 }
