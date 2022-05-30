@@ -4,8 +4,7 @@ import com.google.inject.Inject;
 import com.smoly.experimental.sockets.core.http.Context;
 
 import javax.inject.Singleton;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.util.function.Consumer;
 
 @Singleton
 public class Dispatcher {
@@ -15,11 +14,11 @@ public class Dispatcher {
         this.routerMap = routerMap;
     }
 
-    void processRequest(Context ctx) throws InterruptedException, IOException {
-        System.out.println("Request was processed");
+    void processRequest(Context ctx) {
         if (routerMap.isHandlerForPathExists(ctx.getRequest().getPath())) {
             System.out.println("Router found: " + ctx.getRequest().getPath() );
-            routerMap.getHandlerForPath(ctx.getRequest().getPath()).accept(ctx);
+            Consumer<Context> handlerFunction = routerMap.getHandlerForPath(ctx.getRequest().getPath());
+            handlerFunction.accept(ctx);
         } else {
            throw new PageNotFoundException("Unknown route: " + ctx.getRequest().getPath());
         }

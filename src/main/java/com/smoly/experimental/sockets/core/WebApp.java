@@ -51,15 +51,19 @@ public class WebApp {
                 .filter(method -> method.isAnnotationPresent(RouterAction.class))
                 .forEach(method -> {
                     RouterAction routerAnnotation = method.getAnnotation(RouterAction.class);
-                    routerMap.addHandler(HandlerType.GET, routerAnnotation.path(), (Context ctx) -> {
-                       try {
-                          method.invoke(mainInjector.getInstance(controllerClass), ctx);
-                       } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                       } catch (InvocationTargetException e) {
-                          e.printStackTrace();
-                }
-            });
+                    routerMap.addHandler(HandlerType.GET, routerAnnotation.path(), (Context ctx) ->
+                    {
+                        try {
+                            method.invoke(mainInjector.getInstance(controllerClass), ctx);
+                        } catch (InvocationTargetException e) {
+                            ctx.respond("Internal Server Error occurred", 500, "Internal Server Error");
+                            System.out.println("Error in request processing: " + e.getTargetException().getMessage());
+                        } catch (Exception e) {
+                            ctx.respond("Internal Server Error occurred", 500, "Internal Server Error");
+                            System.out.println("Error in request processing: " + e.getMessage());
+                        }
+                    }
+                );
         });
     }
 
@@ -76,23 +80,20 @@ public class WebApp {
         }
     }
 
-
     private Runnable getRequestHandlerTask (Context ctx) {
         return new Runnable() {
             @Override
             public void run() {
-                System.out.println("Start handling request");
+                System.out.println(">>> Start handling request");
                 try {
                     requestDispatcher.processRequest(ctx);
                 }catch (PageNotFoundException e) {
-                    try {
-                        ctx.respond("Error Page not found", 404, "Not Found");
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                } catch (Exception e) {
-                    System.out.println("Error in request processing: " + e.getMessage());
+                        System.out.printf("Processing failed: Page with address: %s is not found!",
+                                ctx.getRequest().getPath());
+                        System.out.println();
+                        ctx.respond("Error occurred: Page has not found", 404, "Not Found");
                 }
+                System.out.println("<<< Request has been processed");
             }
         };
     }

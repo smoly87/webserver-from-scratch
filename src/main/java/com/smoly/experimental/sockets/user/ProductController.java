@@ -21,6 +21,11 @@ public class ProductController implements Controller {
         ctx.respond("Products list");
     }
 
+    @RouterAction(path="/products/exception")
+    public void productsWithException(Context ctx) throws IOException {
+        throw new RuntimeException("Something goes wrong");
+    }
+
     @RouterAction(path="/async")
     public void asyncAction(Context ctx) throws IOException {
         final CompletableFuture<String> completableFuture = CompletableFuture.supplyAsync(() -> {

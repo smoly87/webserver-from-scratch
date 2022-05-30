@@ -19,11 +19,15 @@ public class Context {
     public void respond(String response) throws IOException {
         respond(response, 200, "OK");
     }
-    public void respond(String response, int code, String codeMessage) throws IOException {
+    public void respond(String response, int code, String codeMessage){
         String httpResponse = String.format("HTTP/1.1 %d %s\r\n\r\n ",code, codeMessage ) + response  ;
-        clientSocket.getOutputStream().write(httpResponse.getBytes("UTF-8"));
-        clientSocket.getOutputStream().flush();
-        clientSocket.close();
+        try {
+            clientSocket.getOutputStream().write(httpResponse.getBytes("UTF-8"));
+            clientSocket.getOutputStream().flush();
+            clientSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void respond(CompletableFuture<String> responseFeature) {
